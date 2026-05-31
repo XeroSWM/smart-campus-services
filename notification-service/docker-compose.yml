@@ -1,0 +1,44 @@
+version: '3.8'
+
+services:
+  postgres-db:
+    image: postgres:15-alpine
+    container_name: smart_campus_db
+    environment:
+      POSTGRES_USER: ${DB_USER:-campus_user}
+      POSTGRES_PASSWORD: ${DB_PASSWORD:-campus_pass}
+      POSTGRES_DB: ${DB_NAME:-notifications_db}
+    ports:
+      - "5432:5432"
+    volumes:
+      - pgdata:/var/lib/postgresql/data
+    networks:
+      - campus_network
+
+  api:
+    build:
+      context: .
+      dockerfile: Dockerfile
+    container_name: notification_service
+    ports:
+      - "3000:3000"
+    environment:
+      DB_HOST: postgres-db
+      DB_PORT: 5432
+      DB_USER: campus_user
+      DB_PASSWORD: campus_pass
+      DB_NAME: notifications_db
+    depends_on:
+      - postgres-db
+    volumes:
+      - .:/usr/src/app
+      - /usr/src/app/node_modules
+    networks:
+      - campus_network
+
+volumes:
+  pgdata:
+
+networks:
+  campus_network:
+    driver: bridge
